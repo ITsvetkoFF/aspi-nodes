@@ -1,7 +1,7 @@
 var app = angular.module("AspiNodesApp", []);
 app.controller('SimulationController', function ($scope) {
 
-    $scope.nodeQuantity = '5';
+    $scope.nodeQuantity = '10000';
     $scope.fieldWidth = '1000';
     $scope.fieldHeight = '1000';
     $scope.fieldMinRange = '50';
@@ -12,19 +12,23 @@ app.controller('SimulationController', function ($scope) {
         showResults();
 
         function clearAndPopulate() {
-            var data = d3.range(50000).map(function () {
+            var start = new Date().getTime();
+            var data = d3.range($scope.nodeQuantity).map(function () {
                 return [Math.random() * $scope.fieldWidth, Math.random() * $scope.fieldHeight];
             });
 
             var quadtree = d3.geom.quadtree()
-                .extent([[-1, -1], [$scope.fieldWidth, $scope.fieldHeight]])
+                .extent([[-1, -1], [$scope.fieldWidth+1, $scope.fieldHeight+1]])
                 (data);
 
             $scope.nodes = quadtree;
+
+            var time = new Date().getTime() - start;
+            console.log("Population is finished in "+time+"ms");
         };
 
         function showResults() {
-            console.log(JSON.stringify($scope.nodes));
+
         };
 
     };
