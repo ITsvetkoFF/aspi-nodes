@@ -4,6 +4,8 @@ app.controller('SimulationController', function ($scope) {
   $scope.nodeQuantity = '5';
   $scope.fieldWidth = '1000';
   $scope.fieldHeight = '1000';
+    $scope.fieldMinRange = '50';
+    $scope.fieldMaxRange = '200';
 
     $scope.perform = function () {
         clearAndPopulate();
