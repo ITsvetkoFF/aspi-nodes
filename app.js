@@ -1,7 +1,7 @@
 var app = angular.module("AspiNodesApp", []);
 app.controller('SimulationController', function ($scope) {
 
-    $scope.nodeQuantity = '10000';
+    $scope.nodeQuantity = '100';
     $scope.fieldWidth = '1000';
     $scope.fieldHeight = '1000';
     $scope.fieldMinRange = '50';
@@ -24,6 +24,7 @@ app.controller('SimulationController', function ($scope) {
             //Remember data to perform next step and quadtree to operate this step
             $scope.quadtree = quadtree;
             $scope.positions = data;
+            console.log($scope.quadtree);
 
             var time = new Date().getTime() - start;
             console.log("Population is finished in " + time + "ms");
@@ -46,7 +47,8 @@ app.controller('SimulationController', function ($scope) {
                 });
             };
 
-            search($scope.quadtree,0,$scope.fieldWidth/2,0,$scope.fieldHeight/2);
+            search($scope.quadtree,$scope.fieldWidth/2,0,$scope.fieldHeight/2,0);
+            console.log($scope.quadtree);
         };
 
     };
