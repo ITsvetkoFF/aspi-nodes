@@ -1,0 +1,165 @@
+<html>
+
+<head>
+    <title>App</title>
+    <style>
+        svg {margin-right: 10px;}
+        .left-col {
+            width: 150px;
+            float: left;
+            margin-right: 10px;
+        }
+        .right-col {
+            float: left;
+        }
+        input[type='checkbox'] {height: 1.5em; width: 1.5em; margin:0px;}
+        input[type='text'], button, .right-col, .left-col {height: 30px;}
+        input[type='text'] {padding-left: 6px; width: 80px;}
+        
+        input.stepRangesChange {
+            height: 1.3em;
+        width:30px;
+        padding-left: 0px;
+        text-align: center;}
+        
+        label.left-col {
+            text-align: right;
+            padding-top: 7px;
+        }
+        label.upperLabel input[type='checkbox'] {position: relative; top:4px;}
+        label.upperLabel input[type='checkbox']:hover {
+            cursor: pointer;}
+        label.upperLabel:hover {
+            cursor: pointer;}
+
+        .clear {
+            clear: both
+        }
+        .separator {
+            height: 0px;
+            position: relative;
+        }
+        button {margin-left: 0px;}
+
+        .point {
+          fill: rgba(0,0,0,0.01);
+            stroke: rgba(0,0,0,0.1);
+        }
+
+        .point.scanned {
+          fill: orange;
+          fill-opacity: 1;
+          stroke: brown;
+        }
+
+        .point.selected {
+          fill: red;
+          fill-opacity: 1;
+        }
+
+        .node {
+          fill: none;
+          stroke: #eee;
+          shape-rendering: crispEdges;
+        }
+        .link {
+            stroke: rgba(0,0,0,0.5);
+            stroke-width: 1px;
+            z-index: 5;
+        }
+        .link-elemenated {
+            stroke: rgba(228,0,0,0.1);
+            stroke-width: 3px;
+            z-index: 4;
+        }
+        .populator {
+            color: royalblue;
+            text-decoration: underline;
+        }
+        
+        .populator:hover {
+            cursor: pointer;}
+        .resultBlock {background-color: #eee; padding:10px; box-sizing: border-box; margin-bottom: 10px;}
+
+        .stepRanges {
+            position: absolute;
+        left:250px; padding: 20px 10px; top:2px; border-left: solid 3px #eeeeee;}
+
+        .manual-controls {margin:15px 0px;}
+
+        .semi-transparent {opacity: 0.4;}
+
+        .Planarization {float:left;}
+        .oneExperiment {clear: both; margin-top: 20px;}
+
+        table, td,tr {border: 1px solid #000000;}
+        td {height:20px;}
+
+    </style>
+</head>
+
+<body ng-app="AspiNodesApp" ng-controller="SimulationController">
+
+<h1>Please, choose simulation parameters and <span class = "populator" ng-click="startSim()">start</span>
+    <!--| draw <input type="checkbox" ng-model="datum.drawEverything">  // THIS IS INTENDED TO AVOID DRAWING - TODO  -->
+</h1>
+   
+
+    <div>
+        <form name="form" novalidate>
+            <label class = "upperLabel semi-transparent" ><input type="checkbox" ng-model="showTheControls" ng-init="showTheControls = true"> Show controls </label>
+            <div class="clear separator"></div>
+            <div class = "control-group" ng-show="showTheControls">
+                <label class="left-col" for="inputNodeQuantity">Number of nodes:</label>
+                <input id="inputNodeQuantity" type="text" ng-model="datum.nodeQuantity" required />
+
+                <div class="clear separator">
+                    <label class="left-col" for="inputFieldWidth">Field width (m):</label>
+                    <input id="inputFieldWidth" type="text" ng-model="datum.fieldWidth" required />
+                </div>
+
+                <div class="clear separator">
+                    <label class="left-col" for="inputFieldHeight">Field height (m):</label>
+                    <input id="inputFieldHeight" type="text" ng-model="datum.fieldHeight" required />
+                </div>
+
+                <div class="clear separator">
+                    <label class="left-col" for="inputFieldMaxRange">Maximum range (m):</label>
+                    <input id="inputFieldMaxRange" type="text" ng-model="datum.fieldMaxRange" required/>
+                    <div class="stepRanges">
+                        Step ranges from average value to these two in
+                        <input  class="stepRangesChange" type="text" ng-model="datum.rangeStepNumber"/> steps,
+                        performing <input class="stepRangesChange" type="text" ng-model="datum.oneRangeStepExperiments"/> simulations on each step
+
+                    </div>
+                </div>
+                <div class="clear separator">
+                    <label class="left-col" for="inputFieldMinRange">Minimum range (m):</label>
+                    <input id="inputFieldMinRange" type="text" ng-model="datum.fieldMinRange" required/>
+                </div>
+
+                <div class="clear separator"></div>
+            </div>
+
+        </form>
+        <div class="manual-controls" ng-show="false"> <!--datum.populated-->
+            <label class="left-col" ><strong>Manual actions:</strong></label>
+            <button ng-click="performNothing()">No planarization</button>
+            <!--<button ng-click="hideNeighbors()" ng-show="datum.populated">Hide neighbors</button>-->
+            <button ng-click="performRNGPlanarization()">RNG planarization</button>
+            <button ng-click="performGGPlanarization()">GG planarization</button>
+        </div>
+
+
+        </div>
+
+    <script src="libs/http_underscorejs.org_underscore.js"></script>
+    <script src="libs/http_ajax.googleapis.com_ajax_libs_angularjs_1.2.23_angular.js"></script>
+    <script src="libs/http_d3js.org_d3.v3.js" charset="utf-8"></script>
+    <script src="app.js"></script>
+    <!--
+    <script src="services.js"></script>
+    -->
+</body>
+
+</html>
