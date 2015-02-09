@@ -2,196 +2,38 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Quadtree and plain search comparison</title>
-    <style>
-        svg {margin-right: 10px;}
-        .left-col {
-            width: 150px;
-            float: left;
-            margin-right: 10px;
-        }
-        .right-col {
-            float: left;
-        }
-        input[type='checkbox'] {height: 1.5em; width: 1.5em; margin:0px;}
-        input[type='text'], button, .right-col, .left-col {height: 30px;}
-        input[type='text'] {padding-left: 6px; width: 80px;}
-        
-        input.stepRangesChange {
-            height: 1.3em;
-        width:30px;
-        padding-left: 0px;
-        text-align: center;}
-        
-        label.left-col {
-            text-align: right;
-            padding-top: 7px;
-        }
-        label.upperLabel input[type='checkbox'] {position: relative; top:4px;}
-        label.upperLabel input[type='checkbox']:hover {
-            cursor: pointer;}
-        label.upperLabel:hover {
-            cursor: pointer;}
-
-        .clear {
-            clear: both
-        }
-        .separator {
-            height: 0px;
-            position: relative;
-        }
-        button {margin-left: 0px;}
-
-        .point {
-          fill: rgba(0,0,0,0.01);
-            stroke: rgba(0,0,0,0.1);
-        }
-
-        .point.scanned {
-          fill: orange;
-          fill-opacity: 1;
-          stroke: brown;
-        }
-
-        .point.selected {
-          fill: red;
-          fill-opacity: 1;
-        }
-
-        .node {
-          fill: none;
-          stroke: #eee;
-          shape-rendering: crispEdges;
-        }
-        .link {
-            stroke: rgba(0,0,0,0.5);
-            stroke-width: 1px;
-            z-index: 5;
-        }
-        .link-elemenated {
-            stroke: rgba(228,0,0,0.1);
-            stroke-width: 3px;
-            z-index: 4;
-        }
-        .populator {
-            color: royalblue;
-            text-decoration: underline;
-        }
-        
-        .populator:hover {
-            cursor: pointer;}
-        .resultBlock {background-color: #eee; padding:10px; box-sizing: border-box; margin-bottom: 10px;}
-
-        .stepRanges {
-            display: none;
-            position: absolute;
-        left:250px; padding: 20px 10px; top:2px; border-left: solid 3px #eeeeee;}
-
-        .manual-controls {margin:15px 0px;}
-
-        .semi-transparent {opacity: 0.4;}
-
-        .Planarization {float:left;}
-        .oneExperiment {clear: both; margin-top: 20px;}
-
-        table, td,tr {border: 1px solid #000000;}
-        td {height:20px;}
-
-
-        body {
-            font: 14px sans-serif;
-        }
-
-        .axis path,
-        .axis line {
-            fill: none;
-            stroke: #000;
-            shape-rendering: crispEdges;
-        }
-
-        .x.axis path {
-            display: none;
-        }
-
-        .lineWith {
-            fill: none;
-            stroke: #000000;
-            stroke-dasharray: 8,8;
-            stroke-width: 2px;
-        }
-        .lineWithout {
-            fill: none;
-            stroke: #222222;
-            stroke-width: 2px;
-        }
-
-
-    </style>
-
-
-
+    <title>My algorithm VS GDSTR</title>
+    <link type="text/css" rel="stylesheet" href="css/main.css">
 </head>
 
 <body ng-app="AspiNodesApp" ng-controller="SimulationController">
 
-<h1>Please, choose simulation parameters and <span class = "populator" ng-click="startSim()">click here!</span>
-    <!--| draw <input type="checkbox" ng-model="datum.drawEverything">  // THIS IS INTENDED TO AVOID DRAWING - TODO  -->
-</h1>
-
-This will simulate process of neighbors search in ad-hoc network using quadtree (dashed line) and plain search (solid line).
-<br/>
-Simulation process is the next: field with specified parameters is initialized and each step is populated with 100, 200, 300, etc. nodes.
-<br/>
-On each step neighbors search is performed using quadtree (dashed line) and plain search (solid line).
-<br/>
-Simulation finishes after the total simulation time on one step for 2 types of search is more than 500ms.
-<br/>
-As a result plots are drawn.
-<br/>
-It can be seen that quadtree outperforms plain search if the average node radio range is 40+ times smaller than network dimensions.
-
-<br/><br/>
-
-    <div>
-        <form name="form" novalidate>
-            <label class = "upperLabel semi-transparent" ><input type="checkbox" ng-model="showTheControls" ng-init="showTheControls = true"> Show controls </label>
-            <div class="clear separator"></div>
-            <div class = "control-group" ng-show="showTheControls">
-                <!--<label class="left-col" for="inputNodeQuantity">Number of nodes:</label>
-                <input id="inputNodeQuantity" type="text" ng-model="datum.nodeQuantity" required />-->
-
-                <div class="clear separator">
-                    <label class="left-col" for="inputFieldWidth">Field width (m):</label>
-                    <input id="inputFieldWidth" type="text" ng-model="datum.fieldWidth" required />
-                </div>
-
-                <div class="clear separator">
-                    <label class="left-col" for="inputFieldHeight">Field height (m):</label>
-                    <input id="inputFieldHeight" type="text" ng-model="datum.fieldHeight" required />
-                </div>
-
-                <div class="clear separator">
-                    <label class="left-col" for="inputFieldMaxRange">Maximum range (m):</label>
-                    <input id="inputFieldMaxRange" type="text" ng-model="datum.fieldMaxRange" required/>
-                    <div class="stepRanges">
-                        Step ranges from average value to these two in
-                        <input  class="stepRangesChange" type="text" ng-model="datum.rangeStepNumber"/> steps,
-                        performing <input class="stepRangesChange" type="text" ng-model="datum.oneRangeStepExperiments"/> simulations on each step
-
-                    </div>
-                </div>
-                <div class="clear separator">
-                    <label class="left-col" for="inputFieldMinRange">Minimum range (m):</label>
-                    <input id="inputFieldMinRange" type="text" ng-model="datum.fieldMinRange" required/>
-                </div>
-
-                <div class="clear separator"></div>
-            </div>
-
-        </form>
+    <h1>Please, choose simulation parameters and <input type="button" value="click here!" ng-click="startSim()"/></h1>
 
 
-        </div>
+    <br/>
+
+    <label><input type="checkbox" ng-model="showTheControls" ng-init="showTheControls = true"> Show controls </label>
+    <div class = "control-group" ng-show="showTheControls">
+        <label for="inputNodeQuantity">Number of nodes:</label>
+        <input id="inputNodeQuantity" type="text" ng-model="form.nodeQuantity" required />
+
+        <label for="inputFieldWidth">Field width (m):</label>
+        <input id="inputFieldWidth" type="text" ng-model="form.fieldWidth" required />
+
+
+        <label for="inputFieldHeight">Field height (m):</label>
+        <input id="inputFieldHeight" type="text" ng-model="form.fieldHeight" required />
+
+        <label for="inputFieldMaxRange">Maximum range (m):</label>
+        <input id="inputFieldMaxRange" type="text" ng-model="form.fieldMaxRange" required/>
+
+        <label for="inputFieldMinRange">Minimum range (m):</label>
+        <input id="inputFieldMinRange" type="text" ng-model="form.fieldMinRange" required/>
+    </div>
+
+    <label ng-show = "false"><input type="checkbox"  ng-model="form.showTheImage"> Show visualization </label>
+
 
     <script src="libs/http_ajax.googleapis.com_ajax_libs_angularjs_1.2.23_angular.js"></script>
     <script src="libs/http_d3js.org_d3.v3.js" charset="utf-8"></script>

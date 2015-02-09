@@ -1,218 +1,177 @@
 var app = angular.module("AspiNodesApp", []);
 app.controller('SimulationController', function ($scope) {
 
-    $scope.datum = {};
-    $scope.temp = {};
-
+    $scope.form = {};
     // Form defaults
-    $scope.datum.nodeQuantity = '10'; //4000
-    $scope.datum.fieldWidth = '500';   //1800
-    $scope.datum.fieldHeight = '500';  //800
-    $scope.datum.fieldMaxRange = '50';//50
-    $scope.datum.fieldMinRange = '0'; //10
-    $scope.datum.pointData = [];
-    $scope.datum.populated = false;
-    $scope.datum.drawEverything = true;
-    $scope.datum.rangeStepNumber = 1;
+    $scope.form.fieldWidth = '200';   //1800
+    $scope.form.fieldHeight = '200';  //800
+    $scope.form.fieldMaxRange = '50';//50
+    $scope.form.showTheImage = true;
+    $scope.form.fieldMinRange = '0'; //10
+    $scope.form.nodeQuantity = '3'; //4000
+
+    //DEFINE SIMULATION PARAMETERS
+    var width, height, minR, maxR, nQ;
+
+    $scope.datum = {};
     $scope.datum.oneRangeStepExperiments = 1;
+    $scope.datum.pointData = [];
 
     var euclidDistance = function(ax, ay, bx, by) {
         return Math.sqrt(Math.pow(ax - bx, 2) + Math.pow(ay - by, 2));
     };
 
-    var clearNeighborsInfo = function() {
-        $scope.datum.pointData.forEach(function(element,index,array) {
-            element.HopOneNeighbors = [];
-        });
-    };
-
-
     //start  sim with parameters variation
     $scope.startSim = function() {
+        width = parseInt($scope.form.fieldWidth),
+        height = parseInt($scope.form.fieldHeight),
+        minR = parseInt($scope.form.fieldMinRange),
+        maxR = parseInt($scope.form.fieldMaxRange),
+        nQ = parseInt($scope.form.nodeQuantity);
 
-        var initialNumOfNodes = 100;
-        var step = 100;
+        populateField();
+        createQuadtree();
+        //defineOneHopNeighbors();
+        var iteration = 10;
+        var svg = d3.select("body").append("svg")
+            .attr("width", width)
+            .attr("height", height);
+        (function(){
+            var i = 100;
+            (function k(){
+                drawNodes(svg);
+                changePointData();
+                createQuadtree();
+                iteration--;
+                if( --i ) {
+                    setTimeout( k, 40 );
+                }
 
-        // [
-        //      {"numOfNodes": .. ,"time": .. }
-        //      {"numOfNodes": .. ,"time": .. }
-        // ]
-        var simDataWithQuadtree =[];
-        var simDataWithoutQuadtree =[];
+            })();
+        })();
 
-        var lessThanMinute = true;
-        var numOfNodes = initialNumOfNodes;
-        while (lessThanMinute) {
-            var experimentResult = [];
-            var start = new Date().getTime();
 
-            populateField(parseInt($scope.datum.fieldMinRange), parseInt($scope.datum.fieldMaxRange),numOfNodes);
-
-            var startExp1 = new Date().getTime();
-            defineOneHopNeighbors(true); //withQuadtree
-            experimentResult.time = new Date().getTime() - startExp1;
-            experimentResult.numOfNodes = numOfNodes;
-            simDataWithQuadtree.push(experimentResult);
-
-            experimentResult = [];
-
-            var startExp2 = new Date().getTime();
-            defineOneHopNeighbors(false); //withoutQuadtree
-            experimentResult.time = new Date().getTime() - startExp2;
-            experimentResult.numOfNodes = numOfNodes;
-            simDataWithoutQuadtree.push(experimentResult);
-
-            numOfNodes+=step;
-            var time = new Date().getTime() - start;
-            if (time>500) {lessThanMinute = false;}
-
-        }
-
-        drawLineGraph(simDataWithQuadtree, simDataWithoutQuadtree);
 
     };
 
     // Only generates pointData: x,y,r,id,1hop(empty object)
-    var populateField = function (minR, maxR, nQ) {
-        var start = new Date().getTime();
-
-        //DEFINE SIMULATION PARAMETERS
-        var width = parseInt($scope.datum.fieldWidth),
-            height = parseInt($scope.datum.fieldHeight);
-
+    var populateField = function () {
         var pointData = d3.range(nQ).map(function (element,index) {
-            return {"x":Math.random() * width,
-                "y":Math.random() * height,
-                "r":Math.random() * (maxR - minR) + minR,
-                "id":index,
-                "HopOneNeighbors":[]};
+            return {"x": Math.random() * width,
+                "y": Math.random() * height,
+                "r": Math.random() * (maxR - minR) + minR,
+                "id": index,
+                "speed": Math.random() * 10,
+                "direction": Math.random() * 2 * Math.PI,
+                "HopOneNeighbors": []};
         });
 
         // Share data (or rewrite)
         $scope.datum.pointData = pointData;
-
-        var time = new Date().getTime() - start;
     };
 
-    var defineOneHopNeighbors = function(withQuadtreeFlag) {
+    var createQuadtree = function () {
+        var qData = $scope.datum.pointData;
+        var qtr = d3.geom.quadtree()
+            .extent([[-1, -1], [parseInt($scope.form.fieldWidth) + 1, parseInt($scope.form.fieldHeight) + 1]])
+            .x(function(d) { return d.x; })
+            .y(function(d) { return d.y; })
+        (qData);
 
-        var qData = $scope.datum.pointData.map(function(one) {
-            return [one.x,one.y,one.r,one.id];
-        });
+        // Share data (or rewrite)
+        $scope.datum.quadTree = qtr;
+    };
 
+    var drawNodes = function(svg) {
+        var quadtree = $scope.datum.quadTree;
 
+        svg.selectAll("*").remove();
+        svg.selectAll(".node")
+            .data(nodes(quadtree))
+            .enter().append("rect")
+            .attr("class", "node")
+            .attr("x", function(d) { return d.x; })
+            .attr("y", function(d) { return d.y; })
+            .attr("width", function(d) { return d.width; })
+            .attr("height", function(d) { return d.height; });
 
-        if (withQuadtreeFlag == true) {
-            // Create quadtree
-            var foundLinks = 0;
-            var quadtree = d3.geom.quadtree()
-                .extent([[-1, -1], [parseInt($scope.datum.fieldWidth) + 1, parseInt($scope.datum.fieldHeight) + 1]])
-            (qData);
+        var point = svg.selectAll(".point")
+            .data(plain(quadtree))
+            .enter().append("circle")
+            .attr("class", "point")
+            .attr("cx", function(d) { return d.x; })
+            .attr("cy", function(d) { return d.y; })
+            .attr("r", 4);
 
-            function QTsearch(quadtree, x0, y0, x3, y3) {
-                quadtree.visit(function (node, x1, y1, x2, y2) {
-                    var p = node.point;
-                    if (p) {
-                        var xp = (x0+x3)/2;
-                        var yp = (y0+y3)/2;
-                        var rp = Math.abs(xp-x0);
-                        var xn = p[0];
-                        var yn = p[1];
-                        var rn = p[2];
-                        var distToDraw = euclidDistance(xp,yp,xn,yn);
-                        if (Math.min(rn,rp)>distToDraw && distToDraw != 0) {
-                            foundLinks++;
-                        }
-                    }
-                    return x1 >= x3 || y1 >= y3 || x2 < x0 || y2 < y0
-                });
-            };
-
-            qData.forEach(function (d, i) {
-                $scope.temp.that = d;
-                QTsearch(quadtree, d[0] - d[2], d[1] - d[2], d[0] + d[2], d[1] + d[2]);
+        function nodes(quadtree) {
+            var nodes = [];
+            quadtree.visit(function(node, x1, y1, x2, y2) {
+                nodes.push({x: x1, y: y1, width: x2 - x1, height: y2 - y1});
             });
-
-
-            console.log(foundLinks);
-        } else {
-            var foundLinks = 0;
-            var len = qData.length;
-            var i;
-            for (i=0;i<len-1;i++) {
-                var node = qData[i];
-                var j;
-                for (j=i+1;j<len;j++) {
-                    var candidate = qData[j];
-
-                    var distToDraw = euclidDistance(node[0],node[1],candidate[0],candidate[1]);
-                    if (Math.min(node[2],candidate[2])>distToDraw) {foundLinks++;}
-
-                }
-            }
-            console.log(foundLinks);
+            return nodes;
         }
-    }
+
+        function plain(quadtree) {
+            var data = [];
+            quadtree.visit(function(node, x1, y1, x2, y2) {
+                var p = node.point;
+                if (p) {
+                    data.push({x: node.x, y: node.y});
+                }
+            });
+            return data;
+        }
+    };
+
+    var changePointData = function() {
+        var pointData = $scope.datum.pointData;
+        pointData.forEach(function(element,index){
+            var newX = element.x + element.speed*Math.cos(element.direction);
+            if (newX>0 && newX<width) {
+                element.x = newX;
+            } else {
+                element.direction = Math.PI - element.direction;
+                element.x = element.x + element.speed*Math.cos(element.direction);
+            }
+
+            var newY = element.y - element.speed*Math.sin(element.direction);
+            if (newY>0 && newY<height) {
+                element.y = newY
+            } else {
+                element.direction = - element.direction;
+                element.y = element.y - element.speed*Math.sin(element.direction);
+            }
+        });
+        // Share data (or rewrite)
+        $scope.datum.pointData = pointData;
+
+    };
 
 
-
-    function drawLineGraph(data1,data2) {  //TODO - send titles for data
-        var margin = {top: 20, right: 20, bottom: 30, left: 50},
-            width = 960 - margin.left - margin.right,
-            height = 500 - margin.top - margin.bottom;
-
-        var x = d3.scale.linear()
-            .range([0, width]);
-
-        var y = d3.scale.linear()
-            .range([height, 0]);
-
-        var xAxis = d3.svg.axis()
-            .scale(x)
-            .orient("bottom");
-
-        var yAxis = d3.svg.axis()
-            .scale(y)
-            .orient("left");
-
-        var line = d3.svg.line()
-            .x(function(d) { return x(d.numOfNodes); })
-            .y(function(d) { return y(d.time); });
-
-        var svg = d3.select("body").append("svg")
-            .attr("width", width + margin.left + margin.right)
-            .attr("height", height + margin.top + margin.bottom)
-            .append("g")
-            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
-            x.domain(d3.extent(data1, function(d) { return d.numOfNodes; }));
-            y.domain([0, 400]);
-
-            svg.append("g")
-                .attr("class", "x axis")
-                .attr("transform", "translate(0," + height + ")")
-                .call(xAxis);
-
-            svg.append("g")
-                .attr("class", "y axis")
-                .call(yAxis)
-                .append("text")
-                .attr("transform", "rotate(-90)")
-                .attr("y", 6)
-                .attr("dy", ".71em")
-                .style("text-anchor", "end")
-                .text("Час пошуку сусідів, мс");
-
-            svg.append("path")
-                .datum(data1)
-                .attr("class", "lineWith")
-                .attr("d", line);
-            svg.append("path")
-                .datum(data2)
-                .attr("class", "lineWithout")
-                .attr("d", line);
-
-
+    var defineOneHopNeighbors = function() {
+        qtree = $scope.datum.quadTree;
+        qtree.forEach(function (d, i) {
+            $scope.temp.that = d;
+            QTsearch(quadtree, d.x - d.r, d.y - d.r, d.x + d.r, d.y + d.r);
+        });
+        function QTsearch(quadtree, x0, y0, x3, y3) {
+            quadtree.visit(function (node, x1, y1, x2, y2) {
+                var p = node.point;
+                if (p) {
+                    var xp = (x0+x3)/2;
+                    var yp = (y0+y3)/2;
+                    var rp = Math.abs(xp-x0);
+                    var xn = p[0];
+                    var yn = p[1];
+                    var rn = p[2];
+                    var distToDraw = euclidDistance(xp,yp,xn,yn);
+                    if (Math.min(rn,rp)>distToDraw && distToDraw != 0) {
+                        foundLinks++;
+                    }
+                }
+                return x1 >= x3 || y1 >= y3 || x2 < x0 || y2 < y0
+            });
+        };
     };
 
 });

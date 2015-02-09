@@ -1,0 +1,25 @@
+body {margin: 5px;}
+.control-group label, .control-group input {
+    display: block;}
+
+.point {
+
+    stroke: #000;
+}
+
+.point.scanned {
+    fill: orange;
+    fill-opacity: 1;
+    stroke: brown;
+}
+
+.point.selected {
+    fill: red;
+    fill-opacity: 1;
+}
+
+.node {
+    fill: none;
+    stroke: #ccc;
+    shape-rendering: crispEdges;
+}
